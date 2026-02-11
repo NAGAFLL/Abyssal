@@ -1,6 +1,26 @@
 {
+  "name": "nebula-server",
+  "version": "1.0.0",
+  "description": "Nebula Cloud Browser Engine",
+  "main": "server/server.ts",
+  "type": "module",
+  "scripts": {
+    "start": "tsx server/server.ts",
+    "dev": "tsx --watch server/server.ts",
+    "postinstall": "npx puppeteer browsers install chrome"
+  },
   "dependencies": {
-    "@fastify/static": "^9.0.0",
-    "react-use-websocket": "^4.13.0"
+    "@fastify/cors": "^10.0.0",
+    "@fastify/websocket": "^11.0.0",
+    "axios": "^1.7.0",
+    "fastify": "^5.0.0",
+    "puppeteer": "^24.0.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "tsx": "^4.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0"
   }
 }

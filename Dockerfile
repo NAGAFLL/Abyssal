@@ -1,26 +1,28 @@
-# Use the official Puppeteer image which includes Chrome and all dependencies
 FROM ghcr.io/puppeteer/puppeteer:latest
 
-# Set the working directory
+USER root
+
+# Set working directory
 WORKDIR /app
 
-# Copy package files first to leverage Docker layer caching
+# Copy package files
 COPY package*.json ./
 
-# Switch to root to ensure permissions are correct for installs
-USER root
+# Install dependencies and FORCE chrome installation to a known path
 RUN npm install
+RUN npx puppeteer browsers install chrome
 
-# Copy the rest of your application code
+# Copy the rest of the app
 COPY . .
 
 # Set environment variables
-# Koyeb provides the PORT variable automatically
 ENV PORT=8000
-ENV NODE_ENV=production
+# This tells Puppeteer where to look for the browser we just installed
+ENV PUPPETEER_CACHE_DIR=/home/pptruser/.cache/puppeteer
 
-# Expose the port
 EXPOSE 8000
 
-# Start the application using tsx to run your typescript server
+# Use the pptruser provided by the image for better security/compatibility
+USER pptruser
+
 CMD ["npx", "tsx", "server/server.ts"]
