@@ -1,0 +1,85 @@
+<script>
+    lucide.createIcons();
+    const img = document.getElementById('stream-canvas');
+    const urlInput = document.getElementById('urlInput');
+    const tabBar = document.getElementById('tabBar');
+    const loader = document.getElementById('loader');
+
+    let tabs = [{ id: 'tab-1', title: 'Google' }];
+    let activeTabId = 'tab-1';
+    let ws;
+
+    const connect = () => {
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        ws = new WebSocket(`${protocol}://${window.location.host}/ws`);
+
+        ws.onopen = () => {
+            loader.style.display = 'none';
+        };
+
+        ws.onmessage = (event) => {
+            const url = URL.createObjectURL(event.data);
+            img.src = url;
+            img.onload = () => URL.revokeObjectURL(url);
+        };
+
+        ws.onclose = () => {
+            loader.style.display = 'block';
+            loader.innerText = "Link Severed. Reconnecting...";
+            setTimeout(connect, 2000);
+        };
+    };
+
+    function navigate() {
+        let input = urlInput.value.trim();
+        if (!input) return;
+
+        let targetUrl;
+        // Check if it's a URL (contains a dot and no spaces) or a search query
+        const isUrl = input.includes('.') && !input.includes(' ');
+
+        if (isUrl) {
+            targetUrl = input.startsWith('http') ? input : 'https://' + input;
+        } else {
+            // It's a search query
+            targetUrl = `https://www.google.com/search?q=${encodeURIComponent(input)}`;
+        }
+        
+        const tab = tabs.find(t => t.id === activeTabId);
+        tab.title = isUrl ? input.split('/')[0] : input;
+        renderTabs();
+
+        if(ws.readyState === 1) ws.send(JSON.stringify({ type: 'navigate', url: targetUrl }));
+    }
+
+    // --- KEYBOARD SUPPORT ---
+    window.addEventListener('keydown', (e) => {
+        // Only send keys to the browser if we aren't typing in our own address bar
+        if (document.activeElement !== urlInput && ws && ws.readyState === 1) {
+            // Prevent default behavior for keys like Backspace or Arrows so they don't scroll the host page
+            if (["Backspace", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab"].includes(e.key)) {
+                e.preventDefault();
+            }
+            ws.send(JSON.stringify({ type: 'type', key: e.key }));
+        }
+    });
+
+    // --- MOUSE SUPPORT ---
+    img.addEventListener('mousedown', (e) => {
+        if(ws.readyState !== 1) return;
+        const rect = img.getBoundingClientRect();
+        ws.send(JSON.stringify({ 
+            type: 'click', 
+            x: (e.clientX - rect.left) * (1280 / rect.width), 
+            y: (e.clientY - rect.top) * (720 / rect.height) 
+        }));
+    });
+
+    urlInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') navigate(); });
+    
+    // Initial Render
+    renderTabs();
+    connect();
+
+    // Re-use your existing renderTabs, createNewTab, switchTab, and closeTab functions here
+</script>

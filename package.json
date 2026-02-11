@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@fastify/static": "^9.0.0",
+    "react-use-websocket": "^4.13.0"
+  }
+}
